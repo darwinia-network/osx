@@ -41,9 +41,23 @@ contract PluginCloneableSetupV1Mock is PluginSetup {
     }
 }
 
+// Deploys contracts that are not `IPlugin`.
 contract PluginCloneableSetupV1MockBad is PluginCloneableSetupV1Mock {
     constructor() {
         pluginBase = address(new PluginCloneableV1MockBad());
+    }
+}
+
+// Deploys the same plugin instance all the time.
+contract PluginCloneableSetupV1MockBad2 is PluginCloneableSetupV1Mock {
+    /// @inheritdoc IPluginSetup
+    function prepareInstallation(
+        address _dao,
+        bytes memory
+    ) public virtual override returns (address plugin, PreparedSetupData memory preparedSetupData) {
+        plugin = pluginBase;
+        preparedSetupData.helpers = mockHelpers(1);
+        preparedSetupData.permissions = mockPermissions(5, 6, PermissionLib.Operation.Grant);
     }
 }
 
