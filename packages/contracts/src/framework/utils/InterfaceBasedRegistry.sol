@@ -8,10 +8,16 @@ import {ERC165CheckerUpgradeable} from "@openzeppelin/contracts-upgradeable/util
 import {DaoAuthorizableUpgradeable} from "../../core/plugin/dao-authorizable/DaoAuthorizableUpgradeable.sol";
 import {IDAO} from "../../core/dao/IDAO.sol";
 
+import {ProtocolVersion} from "./ProtocolVersion.sol";
+
 /// @title InterfaceBasedRegistry
 /// @author Aragon Association - 2022-2023
 /// @notice An [ERC-165](https://eips.ethereum.org/EIPS/eip-165)-based registry for contracts
-abstract contract InterfaceBasedRegistry is UUPSUpgradeable, DaoAuthorizableUpgradeable {
+abstract contract InterfaceBasedRegistry is
+    UUPSUpgradeable,
+    DaoAuthorizableUpgradeable,
+    ProtocolVersion
+{
     using ERC165CheckerUpgradeable for address;
 
     /// @notice The ID of the permission required to call the `_authorizeUpgrade` function.
@@ -69,6 +75,15 @@ abstract contract InterfaceBasedRegistry is UUPSUpgradeable, DaoAuthorizableUpgr
         }
 
         entries[_registrant] = true;
+    }
+
+    // just a poc, it would be better practice to inherit this at most derivecd contract
+    function _protocolMinorVersion() internal view virtual override returns (uint8) {
+        return 1;
+    }
+
+    function _protocolpatchVersion() internal view virtual override returns (uint8) {
+        return 0;
     }
 
     /// @notice This empty reserved space is put in place to allow future versions to add new variables without shifting down storage in the inheritance chain (see [OpenZeppelin's guide about storage gaps](https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps)).

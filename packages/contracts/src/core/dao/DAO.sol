@@ -13,6 +13,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155ReceiverUpgrad
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
+import {ProtocolVersion} from "../../framework/utils/ProtocolVersion.sol";
 import {PermissionManager} from "../permission/PermissionManager.sol";
 import {CallbackHandler} from "../utils/CallbackHandler.sol";
 import {hasBit, flipBit} from "../utils/BitMap.sol";
@@ -31,7 +32,8 @@ contract DAO is
     IDAO,
     UUPSUpgradeable,
     PermissionManager,
-    CallbackHandler
+    CallbackHandler,
+    ProtocolVersion
 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using AddressUpgradeable for address;
@@ -353,6 +355,14 @@ contract DAO is
         _daoURI = daoURI_;
 
         emit NewURI(daoURI_);
+    }
+
+    function _protocolMinorVersion() internal view virtual override returns (uint8) {
+        return 1;
+    }
+
+    function _protocolpatchVersion() internal view virtual override returns (uint8) {
+        return 0;
     }
 
     /// @notice This empty reserved space is put in place to allow future versions to add new variables without shifting down storage in the inheritance chain (see [OpenZeppelin's guide about storage gaps](https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps)).
