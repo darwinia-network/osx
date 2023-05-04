@@ -2,10 +2,12 @@
 
 pragma solidity ^0.8.8;
 
+import {IProtocolVersion} from "../../utils/IProtocolVersion.sol";
+
 /// @title IDAO
 /// @author Aragon Association - 2022-2023
 /// @notice The interface required for DAOs within the Aragon App DAO framework.
-interface IDAO {
+interface IDAO is IProtocolVersion {
     /// @notice The action struct to be consumed by the DAO's `execute` function resulting in an external call.
     /// @param to The address to call.
     /// @param value The native token value to be sent with the call.
