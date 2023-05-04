@@ -16,6 +16,8 @@ interface IDAO {
         bytes data;
     }
 
+    function getVersion() external pure returns (uint8[3] memory _version);
+
     /// @notice Checks if an address has permission on a contract via a permission identifier and considers if `ANY_ADDRESS` was used in the granting process.
     /// @param _where The address of the contract.
     /// @param _who The address of a EOA or contract to give the permissions.

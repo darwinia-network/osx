@@ -19,6 +19,8 @@ import {hasBit, flipBit} from "../utils/BitMap.sol";
 import {IEIP4824} from "./IEIP4824.sol";
 import {IDAO} from "./IDAO.sol";
 
+import {protocolVersion} from "../../utils/ProtocolVersion.sol";
+
 /// @title DAO
 /// @author Aragon Association - 2021-2023
 /// @notice This contract is the entry point to the Aragon DAO framework and provides our users a simple and easy to use public interface.
@@ -138,6 +140,10 @@ contract DAO is
     /// @notice Internal method authorizing the upgrade of the contract via the [upgradeability mechanism for UUPS proxies](https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable) (see [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822)).
     /// @dev The caller must have the `UPGRADE_DAO_PERMISSION_ID` permission.
     function _authorizeUpgrade(address) internal virtual override auth(UPGRADE_DAO_PERMISSION_ID) {}
+
+    function getVersion() external pure returns (uint8[3] memory _version) {
+        _version = protocolVersion();
+    }
 
     /// @inheritdoc IDAO
     function setTrustedForwarder(

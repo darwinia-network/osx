@@ -61,4 +61,10 @@ contract DAOMock is IDAO, PermissionManager {
         bytes4 _callbackSelector,
         bytes4 _magicNumber
     ) external override {}
+
+    function getVersion() external pure returns (uint8[3] memory _version) {
+        _version[0] = 1;
+        _version[0] = 0;
+        _version[0] = 0;
+    }
 }

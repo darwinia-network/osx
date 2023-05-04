@@ -983,4 +983,11 @@ describe('DAO', function () {
       });
     });
   });
+
+  describe.only('protocol-version', async () => {
+    it('returns the expected protocol version', async () => {
+      const protocolVersion = await dao.getVersion();
+      expect(protocolVersion).to.deep.equal([1, 1, 0]);
+    });
+  });
 });
