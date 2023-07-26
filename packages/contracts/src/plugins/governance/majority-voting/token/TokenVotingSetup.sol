@@ -103,6 +103,7 @@ contract TokenVotingSetup is PluginSetup {
             // [0] = IERC20Upgradeable, [1] = IVotesUpgradeable, [2] = IGovernanceWrappedERC20
             bool[] memory supportedIds = _getTokenInterfaceIds(token);
 
+            // TODO: We wrongly assume here that the governance token supports ERC165 and that we an use it.
             if (
                 // If token supports none of them
                 // it's simply ERC20 which gets checked by _isERC20

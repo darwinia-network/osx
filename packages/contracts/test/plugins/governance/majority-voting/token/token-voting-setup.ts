@@ -12,6 +12,11 @@ import {
   TokenVotingSetup,
   TokenVotingSetup__factory,
   TokenVoting__factory,
+  TestOzGovernanceToken,
+  TestOzGovernanceToken__factory,
+  ERC165__factory,
+  IGovernanceWrappedERC20__factory,
+  IVotesUpgradeable__factory,
 } from '../../../../../typechain';
 import {deployNewDAO} from '../../../../test-utils/dao';
 import {getInterfaceID} from '../../../../test-utils/interfaces';
@@ -218,6 +223,143 @@ describe('TokenVotingSetup', function () {
       )
         .to.be.revertedWithCustomError(tokenVotingSetup, 'TokenNotERC20')
         .withArgs(tokenAddress);
+    });
+
+    it.only('accepts OZ Tokens', async () => {
+      const ozToken = await new TestOzGovernanceToken__factory(
+        signers[0]
+      ).deploy();
+
+      const nonce = await ethers.provider.getTransactionCount(
+        tokenVotingSetup.address
+      );
+
+      const anticipatedPluginAddress = ethers.utils.getContractAddress({
+        from: tokenVotingSetup.address,
+        nonce: nonce,
+      });
+
+      const data = abiCoder.encode(prepareInstallationDataTypes, [
+        Object.values(defaultVotingSettings),
+        [ozToken.address, tokenName, tokenSymbol],
+        Object.values(defaultMintSettings),
+      ]);
+
+      const {
+        plugin,
+        preparedSetupData: {helpers, permissions},
+      } = await tokenVotingSetup.callStatic.prepareInstallation(
+        targetDao.address,
+        data
+      );
+
+      const returnedToken = helpers[0];
+
+      expect(
+        await ERC165__factory.connect(
+          returnedToken,
+          signers[0]
+        ).supportsInterface(
+          getInterfaceID(IGovernanceWrappedERC20__factory.createInterface())
+        )
+      ).to.not.be.true;
+
+      expect(
+        await ERC165__factory.connect(
+          returnedToken,
+          signers[0]
+        ).supportsInterface(
+          getInterfaceID(IVotesUpgradeable__factory.createInterface())
+        )
+      ).to.be.true;
+
+      expect(plugin).to.be.equal(anticipatedPluginAddress);
+      expect(helpers.length).to.be.equal(1);
+      expect(helpers).to.be.deep.equal([ozToken.address]);
+      expect(permissions.length).to.be.equal(3);
+      expect(permissions).to.deep.equal([
+        [
+          Operation.Grant,
+          plugin,
+          targetDao.address,
+          AddressZero,
+          UPDATE_VOTING_SETTINGS_PERMISSION_ID,
+        ],
+        [
+          Operation.Grant,
+          plugin,
+          targetDao.address,
+          AddressZero,
+          UPGRADE_PERMISSION_ID,
+        ],
+        [
+          Operation.Grant,
+          targetDao.address,
+          plugin,
+          AddressZero,
+          EXECUTE_PERMISSION_ID,
+        ],
+      ]);
+    });
+
+    it.only('does not accept an OZ token and thus wraps it', async () => {
+      const ozToken = await new TestOzGovernanceToken__factory(
+        signers[0]
+      ).deploy();
+
+      const nonce = await ethers.provider.getTransactionCount(
+        tokenVotingSetup.address
+      );
+      const anticipatedWrappedTokenAddress = ethers.utils.getContractAddress({
+        from: tokenVotingSetup.address,
+        nonce: nonce,
+      });
+      const anticipatedPluginAddress = ethers.utils.getContractAddress({
+        from: tokenVotingSetup.address,
+        nonce: nonce + 1,
+      });
+
+      const data = abiCoder.encode(prepareInstallationDataTypes, [
+        Object.values(defaultVotingSettings),
+        [ozToken.address, tokenName, tokenSymbol],
+        Object.values(defaultMintSettings),
+      ]);
+
+      const {
+        plugin,
+        preparedSetupData: {helpers, permissions},
+      } = await tokenVotingSetup.callStatic.prepareInstallation(
+        targetDao.address,
+        data
+      );
+
+      expect(plugin).to.be.equal(anticipatedPluginAddress);
+      expect(helpers.length).to.be.equal(1);
+      expect(helpers).to.be.deep.equal([anticipatedWrappedTokenAddress]);
+      expect(permissions.length).to.be.equal(3);
+      expect(permissions).to.deep.equal([
+        [
+          Operation.Grant,
+          plugin,
+          targetDao.address,
+          AddressZero,
+          UPDATE_VOTING_SETTINGS_PERMISSION_ID,
+        ],
+        [
+          Operation.Grant,
+          plugin,
+          targetDao.address,
+          AddressZero,
+          UPGRADE_PERMISSION_ID,
+        ],
+        [
+          Operation.Grant,
+          targetDao.address,
+          plugin,
+          AddressZero,
+          EXECUTE_PERMISSION_ID,
+        ],
+      ]);
     });
 
     it('correctly returns plugin, helpers and permissions, when an ERC20 token address is supplied', async () => {
