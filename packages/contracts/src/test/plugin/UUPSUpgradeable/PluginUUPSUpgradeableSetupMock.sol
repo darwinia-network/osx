@@ -7,13 +7,13 @@ import {IDAO} from "../../../core/dao/IDAO.sol";
 import {PluginSetup} from "../../../framework/plugin/setup/PluginSetup.sol";
 import {IPluginSetup} from "../../../framework/plugin/setup/IPluginSetup.sol";
 import {mockPermissions, mockHelpers, mockPluginProxy} from "../PluginMockData.sol";
-import {PluginUUPSUpgradeableV1Mock, PluginUUPSUpgradeableV2Mock, PluginUUPSUpgradeableV3Mock} from "./PluginUUPSUpgradeableMock.sol";
+import {PluginUUPSUpgradeableBuild1Mock, PluginUUPSUpgradeableBuild2Mock, PluginUUPSUpgradeableBuild3Mock} from "./PluginUUPSUpgradeableMock.sol";
 
-contract PluginUUPSUpgradeableSetupV1Mock is PluginSetup {
+contract PluginUUPSUpgradeableSetupBuild1Mock is PluginSetup {
     address internal pluginBase;
 
     constructor() {
-        pluginBase = address(new PluginUUPSUpgradeableV1Mock());
+        pluginBase = address(new PluginUUPSUpgradeableBuild1Mock());
     }
 
     /// @inheritdoc IPluginSetup
@@ -41,7 +41,7 @@ contract PluginUUPSUpgradeableSetupV1Mock is PluginSetup {
     }
 }
 
-contract PluginUUPSUpgradeableSetupV1MockBad is PluginUUPSUpgradeableSetupV1Mock {
+contract PluginUUPSUpgradeableSetupBuild1MockBad is PluginUUPSUpgradeableSetupBuild1Mock {
     function prepareInstallation(
         address _dao,
         bytes memory
@@ -53,9 +53,9 @@ contract PluginUUPSUpgradeableSetupV1MockBad is PluginUUPSUpgradeableSetupV1Mock
     }
 }
 
-contract PluginUUPSUpgradeableSetupV2Mock is PluginUUPSUpgradeableSetupV1Mock {
+contract PluginUUPSUpgradeableSetupBuild2Mock is PluginUUPSUpgradeableSetupBuild1Mock {
     constructor() {
-        pluginBase = address(new PluginUUPSUpgradeableV2Mock());
+        pluginBase = address(new PluginUUPSUpgradeableBuild2Mock());
     }
 
     /// @inheritdoc IPluginSetup
@@ -83,17 +83,19 @@ contract PluginUUPSUpgradeableSetupV2Mock is PluginUUPSUpgradeableSetupV1Mock {
         // Update from V1
         if (_currentBuild == 1) {
             preparedSetupData.helpers = mockHelpers(2);
-            initData = abi.encodeWithSelector(
-                PluginUUPSUpgradeableV2Mock.initializeV1toV2.selector
+            initData = abi.encodeCall(
+                PluginUUPSUpgradeableBuild2Mock.initializeFrom,
+                (_currentBuild, "")
             );
+
             preparedSetupData.permissions = mockPermissions(1, 2, PermissionLib.Operation.Grant);
         }
     }
 }
 
-contract PluginUUPSUpgradeableSetupV3Mock is PluginUUPSUpgradeableSetupV2Mock {
+contract PluginUUPSUpgradeableSetupBuild3Mock is PluginUUPSUpgradeableSetupBuild2Mock {
     constructor() {
-        pluginBase = address(new PluginUUPSUpgradeableV3Mock());
+        pluginBase = address(new PluginUUPSUpgradeableBuild3Mock());
     }
 
     /// @inheritdoc IPluginSetup
@@ -121,8 +123,9 @@ contract PluginUUPSUpgradeableSetupV3Mock is PluginUUPSUpgradeableSetupV2Mock {
         // Update from V1
         if (_currentBuild == 1) {
             preparedSetupData.helpers = mockHelpers(3);
-            initData = abi.encodeWithSelector(
-                PluginUUPSUpgradeableV3Mock.initializeV1toV3.selector
+            initData = abi.encodeCall(
+                PluginUUPSUpgradeableBuild3Mock.initializeFrom,
+                (_currentBuild, "")
             );
             preparedSetupData.permissions = mockPermissions(1, 3, PermissionLib.Operation.Grant);
         }
@@ -130,8 +133,9 @@ contract PluginUUPSUpgradeableSetupV3Mock is PluginUUPSUpgradeableSetupV2Mock {
         // Update from V2
         if (_currentBuild == 2) {
             preparedSetupData.helpers = mockHelpers(3);
-            initData = abi.encodeWithSelector(
-                PluginUUPSUpgradeableV3Mock.initializeV2toV3.selector
+            initData = abi.encodeCall(
+                PluginUUPSUpgradeableBuild3Mock.initializeFrom,
+                (_currentBuild, "")
             );
             preparedSetupData.permissions = mockPermissions(2, 3, PermissionLib.Operation.Grant);
         }
@@ -143,7 +147,7 @@ contract PluginUUPSUpgradeableSetupV3Mock is PluginUUPSUpgradeableSetupV2Mock {
 /// which uses the same base implementation(doesn't update the logic contract)
 /// but applies new/modifier permissions on it.
 
-contract PluginUUPSUpgradeableSetupV4Mock is PluginUUPSUpgradeableSetupV3Mock {
+contract PluginUUPSUpgradeableSetupBuild4Mock is PluginUUPSUpgradeableSetupBuild3Mock {
     constructor(address _pluginUUPSUpgradeableV3) {
         pluginBase = _pluginUUPSUpgradeableV3;
     }

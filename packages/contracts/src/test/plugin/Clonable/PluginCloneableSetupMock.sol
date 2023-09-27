@@ -7,13 +7,13 @@ import {IDAO} from "../../../core/dao/IDAO.sol";
 import {PluginSetup} from "../../../framework/plugin/setup/PluginSetup.sol";
 import {IPluginSetup} from "../../../framework/plugin/setup/IPluginSetup.sol";
 import {mockPermissions, mockHelpers, mockPluginProxy} from "../PluginMockData.sol";
-import {PluginCloneableV1Mock, PluginCloneableV1MockBad, PluginCloneableV2Mock} from "./PluginCloneableMock.sol";
+import {PluginCloneableBuild1Mock, PluginCloneableBuild1MockBad, PluginCloneableBuild2Mock} from "./PluginCloneableMock.sol";
 
-contract PluginCloneableSetupV1Mock is PluginSetup {
+contract PluginCloneableSetupBuild1Mock is PluginSetup {
     address internal pluginBase;
 
     constructor() {
-        pluginBase = address(new PluginCloneableV1Mock());
+        pluginBase = address(new PluginCloneableBuild1Mock());
     }
 
     /// @inheritdoc IPluginSetup
@@ -41,15 +41,15 @@ contract PluginCloneableSetupV1Mock is PluginSetup {
     }
 }
 
-contract PluginCloneableSetupV1MockBad is PluginCloneableSetupV1Mock {
+contract PluginCloneableSetupBuild1MockBad is PluginCloneableSetupBuild1Mock {
     constructor() {
-        pluginBase = address(new PluginCloneableV1MockBad());
+        pluginBase = address(new PluginCloneableBuild1MockBad());
     }
 }
 
-contract PluginCloneableSetupV2Mock is PluginCloneableSetupV1Mock {
+contract PluginCloneableSetupBuild2Mock is PluginCloneableSetupBuild1Mock {
     constructor() {
-        pluginBase = address(new PluginCloneableV2Mock());
+        pluginBase = address(new PluginCloneableBuild2Mock());
     }
 
     /// @inheritdoc IPluginSetup

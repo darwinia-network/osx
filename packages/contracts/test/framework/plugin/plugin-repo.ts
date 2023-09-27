@@ -9,7 +9,7 @@ import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 import {
   PluginRepo,
   PluginRepo__factory,
-  PluginUUPSUpgradeableSetupV1Mock,
+  PluginUUPSUpgradeableSetupBuild1Mock,
   PlaceholderSetup__factory,
   TestPlugin__factory,
   IERC165__factory,
@@ -47,7 +47,7 @@ describe('PluginRepo', function () {
   let ownerAddress: string;
   let pluginRepo: PluginRepo;
   let signers: SignerWithAddress[];
-  let pluginSetupMock: PluginUUPSUpgradeableSetupV1Mock;
+  let pluginSetupMock: PluginUUPSUpgradeableSetupBuild1Mock;
   let initArgs: any;
 
   before(async () => {
@@ -540,9 +540,9 @@ describe('PluginRepo', function () {
 
     describe('Different types of getVersions:', async () => {
       // R - release, B - build
-      let pluginSetup_R1_B1: PluginUUPSUpgradeableSetupV1Mock;
-      let pluginSetup_R1_B2: PluginUUPSUpgradeableSetupV1Mock;
-      let pluginSetup_R2_B1: PluginUUPSUpgradeableSetupV1Mock;
+      let pluginSetup_R1_B1: PluginUUPSUpgradeableSetupBuild1Mock;
+      let pluginSetup_R1_B2: PluginUUPSUpgradeableSetupBuild1Mock;
+      let pluginSetup_R2_B1: PluginUUPSUpgradeableSetupBuild1Mock;
       let BUILD_METADATA_R1_B1 = BUILD_METADATA;
       let BUILD_METADATA_R1_B2 = `${BUILD_METADATA}11`;
       let BUILD_METADATA_R2_B1 = `${BUILD_METADATA}1111`;

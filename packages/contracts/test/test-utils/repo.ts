@@ -4,9 +4,9 @@ import {
   PluginRepoRegistry,
   PluginRepoFactory,
   PluginRepo,
-  PluginUUPSUpgradeableSetupV1Mock,
+  PluginUUPSUpgradeableSetupBuild1Mock,
   PluginRepo__factory,
-  PluginUUPSUpgradeableSetupV1Mock__factory,
+  PluginUUPSUpgradeableSetupBuild1Mock__factory,
   PluginRepoRegistry__factory,
   PluginRepoFactory__factory,
 } from '../../typechain';
@@ -15,8 +15,10 @@ import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 
 export async function deployMockPluginSetup(
   signer: SignerWithAddress
-): Promise<PluginUUPSUpgradeableSetupV1Mock> {
-  const PluginSetupMock = new PluginUUPSUpgradeableSetupV1Mock__factory(signer);
+): Promise<PluginUUPSUpgradeableSetupBuild1Mock> {
+  const PluginSetupMock = new PluginUUPSUpgradeableSetupBuild1Mock__factory(
+    signer
+  );
   const pluginSetupMockContract = await PluginSetupMock.deploy();
 
   return pluginSetupMockContract;

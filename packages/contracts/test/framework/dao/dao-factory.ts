@@ -6,12 +6,12 @@ import {anyValue} from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import {
   DAORegistry,
   PluginSetupProcessor,
-  PluginUUPSUpgradeableSetupV1Mock,
+  PluginUUPSUpgradeableSetupBuild1Mock,
   PluginRepoRegistry,
   DAOFactory,
   DAOFactory__factory,
   PluginRepoFactory,
-  PluginUUPSUpgradeableSetupV2Mock,
+  PluginUUPSUpgradeableSetupBuild2Mock,
   AdminSetup,
   PluginSetupProcessor__factory,
   DAO__factory,
@@ -20,8 +20,8 @@ import {
   DAO,
   Admin__factory,
   AdminSetup__factory,
-  PluginUUPSUpgradeableSetupV2Mock__factory,
-  PluginUUPSUpgradeableSetupV1Mock__factory,
+  PluginUUPSUpgradeableSetupBuild2Mock__factory,
+  PluginUUPSUpgradeableSetupBuild1Mock__factory,
   DAORegistry__factory,
   PluginRepo__factory,
   IProtocolVersion__factory,
@@ -152,7 +152,7 @@ describe('DAOFactory: ', function () {
   let psp: PluginSetupProcessor;
   let pluginRepoRegistry: PluginRepoRegistry;
 
-  let pluginSetupV1Mock: PluginUUPSUpgradeableSetupV1Mock;
+  let pluginSetupBuild1Mock: PluginUUPSUpgradeableSetupBuild1Mock;
   let pluginRepoMock: PluginRepo;
   let pluginSetupMockRepoAddress: any;
 
@@ -238,13 +238,13 @@ describe('DAOFactory: ', function () {
 
     // Create and register a plugin on the `PluginRepoRegistry`.
     // PluginSetupV1
-    const PluginUUPSUpgradeableSetupV1Mock =
-      new PluginUUPSUpgradeableSetupV1Mock__factory(signers[0]);
-    pluginSetupV1Mock = await PluginUUPSUpgradeableSetupV1Mock.deploy();
+    const PluginUUPSUpgradeableSetupBuild1Mock =
+      new PluginUUPSUpgradeableSetupBuild1Mock__factory(signers[0]);
+    pluginSetupBuild1Mock = await PluginUUPSUpgradeableSetupBuild1Mock.deploy();
 
     const tx = await pluginRepoFactory.createPluginRepoWithFirstVersion(
       'plugin-uupsupgradeable-setup-v1-mock',
-      pluginSetupV1Mock.address,
+      pluginSetupBuild1Mock.address,
       ownerAddress,
       '0x00',
       '0x00'
@@ -330,13 +330,13 @@ describe('DAOFactory: ', function () {
   it('creates a dao with a plugin and emits correct events', async () => {
     const expectedDao = await getAnticipatedAddress(daoFactory.address);
     const expectedPlugin = await getAnticipatedAddress(
-      pluginSetupV1Mock.address
+      pluginSetupBuild1Mock.address
     );
 
     const {
       plugin,
       preparedSetupData: {permissions, helpers},
-    } = await pluginSetupV1Mock.callStatic.prepareInstallation(
+    } = await pluginSetupBuild1Mock.callStatic.prepareInstallation(
       expectedDao,
       pluginInstallationData.data
     );
@@ -513,7 +513,7 @@ describe('DAOFactory: ', function () {
       // We can use the same plugin setup as each time,
       // it returns the different plugin address, hence
       // wil generate unique/different plugin installation id.
-      pluginSetupV1Mock.address,
+      pluginSetupBuild1Mock.address,
       '0x11',
       '0x11'
     );
@@ -544,7 +544,7 @@ describe('DAOFactory: ', function () {
   });
 
   describe('E2E: Install,Update,Uninstall Plugin through Admin Plugin', async () => {
-    let pluginSetupV2Mock: PluginUUPSUpgradeableSetupV2Mock;
+    let pluginSetupBuild2Mock: PluginUUPSUpgradeableSetupBuild2Mock;
     let adminPluginSetup: AdminSetup;
     let adminPluginRepoAddress: string;
     let adminPlugin: Admin;
@@ -552,13 +552,14 @@ describe('DAOFactory: ', function () {
 
     beforeEach(async () => {
       // create 2nd version of PluginUUPSUpgradeableSetupV1.
-      const PluginUUPSUpgradeableSetupV2Mock =
-        new PluginUUPSUpgradeableSetupV2Mock__factory(signers[0]);
-      pluginSetupV2Mock = await PluginUUPSUpgradeableSetupV2Mock.deploy();
+      const PluginUUPSUpgradeableSetupBuild2Mock =
+        new PluginUUPSUpgradeableSetupBuild2Mock__factory(signers[0]);
+      pluginSetupBuild2Mock =
+        await PluginUUPSUpgradeableSetupBuild2Mock.deploy();
       {
         await pluginRepoMock.createVersion(
           1,
-          pluginSetupV2Mock.address,
+          pluginSetupBuild2Mock.address,
           '0x11',
           '0x11'
         );
