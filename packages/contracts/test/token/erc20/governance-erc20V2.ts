@@ -1,7 +1,7 @@
 import {
   DAO,
-  GovernanceERC20,
-  GovernanceERC20__factory,
+  GovernanceERC20V2,
+  GovernanceERC20V2__factory,
   IERC165Upgradeable__factory,
   IERC20MintableUpgradeable__factory,
   IERC20PermitUpgradeable__factory,
@@ -31,18 +31,18 @@ let to: SignerWithAddress;
 let other: SignerWithAddress;
 let toDelegate: string;
 
-describe.only('GovernanceERC20', function () {
+describe.only('GovernanceERC20 V2', function () {
   let signers: SignerWithAddress[];
   let dao: DAO;
-  let token: GovernanceERC20;
-  let GovernanceERC20: GovernanceERC20__factory;
+  let token: GovernanceERC20V2;
+  let GovernanceERC20: GovernanceERC20V2__factory;
   let mintSettings: MintSettings;
   let defaultInitData: [string, string, string, MintSettings];
 
   before(async () => {
     signers = await ethers.getSigners();
     dao = await deployNewDAO(signers[0]);
-    GovernanceERC20 = new GovernanceERC20__factory(signers[0]);
+    GovernanceERC20 = new GovernanceERC20V2__factory(signers[0]);
 
     from = signers[0];
     to = signers[1];
