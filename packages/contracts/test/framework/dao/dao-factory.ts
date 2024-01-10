@@ -23,6 +23,7 @@ import {
   IProtocolVersion__factory,
   IERC165__factory,
   PluginRepoRegistry__factory,
+  PluginRepoFactory__factory,
 } from '../../../typechain';
 import {DAORegisteredEvent} from '../../../typechain/DAORegistry';
 import {PluginRepoRegisteredEvent} from '../../../typechain/PluginRepoRegistry';
@@ -31,6 +32,14 @@ import {findEventTopicLog} from '../../../utils/event';
 import {daoExampleURI, deployNewDAO} from '../../test-utils/dao';
 import {deployENSSubdomainRegistrar} from '../../test-utils/ens';
 import {getInterfaceID} from '../../test-utils/interfaces';
+import {
+  SupportedNetworks,
+  Versions,
+  fork,
+  fundAccount,
+  getContractAddress,
+  getNetworkDeployment,
+} from '../../test-utils/network';
 import {deployPluginSetupProcessor} from '../../test-utils/plugin-setup-processor';
 import {CURRENT_PROTOCOL_VERSION} from '../../test-utils/protocol-version';
 import {deployWithProxy} from '../../test-utils/proxy';
@@ -96,7 +105,7 @@ const REGISTER_STANDARD_CALLBACK_PERMISSION_ID = ethers.utils.id(
 const REGISTER_DAO_PERMISSION_ID = ethers.utils.id('REGISTER_DAO_PERMISSION');
 
 const ALLOW_FLAG = '0x0000000000000000000000000000000000000002';
-const daoDummySubdomain = 'dao1';
+const daoDummySubdomain = '';
 const registrarManagedDomain = 'dao.eth';
 const daoDummyMetadata = '0x0000';
 const EMPTY_DATA = '0x';
@@ -142,19 +151,19 @@ async function getAnticipatedAddress(from: string) {
   return anticipatedAddress;
 }
 
-describe('DAOFactory: ', function () {
+describe.only('DAOFactory: ', function () {
   let daoFactory: DAOFactory;
   let managingDao: any;
 
+  let pspAddr: string;
   let psp: PluginSetupProcessor;
-  let pluginRepoRegistry: PluginRepoRegistry;
 
   let pluginSetupV1Mock: PluginUUPSUpgradeableSetupV1Mock;
   let pluginRepoMock: PluginRepo;
   let pluginSetupMockRepoAddress: any;
 
   let pluginRepoFactory: PluginRepoFactory;
-  let daoRegistry: DAORegistry;
+  let daoRegistryAddr: string;
   let daoSettings: any;
   let pluginInstallationData: any;
 
@@ -162,75 +171,41 @@ describe('DAOFactory: ', function () {
   let ownerAddress: string;
 
   before(async () => {
+    await fork(Versions.V130, SupportedNetworks.MAINNET);
+    const managingDaoAddr = await getContractAddress(
+      Versions.V130,
+      SupportedNetworks.MAINNET,
+      'ManagementDAOProxy'
+    );
+    const managingDaoSigner = await ethers.getImpersonatedSigner(
+      managingDaoAddr
+    );
+    await fundAccount(managingDaoAddr, ethers.utils.parseEther('100'));
+
+    daoRegistryAddr = await getContractAddress(
+      Versions.V130,
+      SupportedNetworks.MAINNET,
+      'DAORegistryProxy'
+    );
+    pspAddr = await getContractAddress(
+      Versions.V130,
+      SupportedNetworks.MAINNET,
+      'PluginSetupProcessor'
+    );
+    psp = PluginSetupProcessor__factory.connect(pspAddr, managingDaoSigner);
     signers = await ethers.getSigners();
     ownerAddress = await signers[0].getAddress();
-  });
 
-  beforeEach(async function () {
-    // Managing DAO
-    managingDao = await deployNewDAO(signers[0]);
-
-    // ENS subdomain Registry
-    const ensSubdomainRegistrar = await deployENSSubdomainRegistrar(
-      signers[0],
-      managingDao,
-      registrarManagedDomain
-    );
-
-    // DAO Registry
-    const DAORegistry = new DAORegistry__factory(signers[0]);
-    daoRegistry = await deployWithProxy(DAORegistry);
-    await daoRegistry.initialize(
-      managingDao.address,
-      ensSubdomainRegistrar.address
-    );
-
-    // Plugin Repo Registry
-    pluginRepoRegistry = await deployPluginRepoRegistry(
-      managingDao,
-      ensSubdomainRegistrar,
-      signers[0]
-    );
-
-    // Plugin Setup Processor
-    psp = await deployPluginSetupProcessor(pluginRepoRegistry);
-
-    // Plugin Repo Factory
-    pluginRepoFactory = await deployPluginRepoFactory(
-      signers,
-      pluginRepoRegistry
-    );
-
+    managingDao = DAO__factory.connect(managingDaoAddr, managingDaoSigner);
     // Deploy DAO Factory
     const DAOFactory = new DAOFactory__factory(signers[0]);
-    daoFactory = await DAOFactory.deploy(daoRegistry.address, psp.address);
+    daoFactory = await DAOFactory.deploy(daoRegistryAddr, pspAddr);
 
     // Grant the `REGISTER_DAO_PERMISSION` permission to the `daoFactory`
     await managingDao.grant(
-      daoRegistry.address,
+      daoRegistryAddr,
       daoFactory.address,
       REGISTER_DAO_PERMISSION_ID
-    );
-
-    // Grant the `REGISTER_ENS_SUBDOMAIN_PERMISSION` permission on the ENS subdomain registrar to the DAO registry contract
-    await managingDao.grant(
-      ensSubdomainRegistrar.address,
-      daoRegistry.address,
-      REGISTER_ENS_SUBDOMAIN_PERMISSION_ID
-    );
-
-    // Grant `PLUGIN_REGISTER_PERMISSION` to `pluginRepoFactory`.
-    await managingDao.grant(
-      pluginRepoRegistry.address,
-      pluginRepoFactory.address,
-      REGISTER_PLUGIN_REPO_PERMISSION_ID
-    );
-
-    // Grant `REGISTER_ENS_SUBDOMAIN_PERMISSION` to `PluginRepoFactory`.
-    await managingDao.grant(
-      ensSubdomainRegistrar.address,
-      pluginRepoRegistry.address,
-      REGISTER_ENS_SUBDOMAIN_PERMISSION_ID
     );
 
     // Create and register a plugin on the `PluginRepoRegistry`.
@@ -239,6 +214,14 @@ describe('DAOFactory: ', function () {
       new PluginUUPSUpgradeableSetupV1Mock__factory(signers[0]);
     pluginSetupV1Mock = await PluginUUPSUpgradeableSetupV1Mock.deploy();
 
+    pluginRepoFactory = PluginRepoFactory__factory.connect(
+      await getContractAddress(
+        Versions.V130,
+        SupportedNetworks.MAINNET,
+        'PluginRepoFactory'
+      ),
+      managingDaoSigner
+    );
     const tx = await pluginRepoFactory.createPluginRepoWithFirstVersion(
       'plugin-uupsupgradeable-setup-v1-mock',
       pluginSetupV1Mock.address,
@@ -353,7 +336,7 @@ describe('DAOFactory: ', function () {
     expect(plugin).to.equal(expectedPlugin);
 
     await expect(tx)
-      .to.emit(daoRegistry, EVENTS.DAORegistered)
+      .to.emit(daoRegistryAddr, EVENTS.DAORegistered)
       .withArgs(dao, ownerAddress, daoSettings.subdomain)
       .to.emit(psp, EVENTS.InstallationPrepared)
       .withArgs(
@@ -547,7 +530,7 @@ describe('DAOFactory: ', function () {
     let adminPlugin: Admin;
     let dao: DAO;
 
-    beforeEach(async () => {
+    before(async () => {
       // create 2nd version of PluginUUPSUpgradeableSetupV1.
       const PluginUUPSUpgradeableSetupV2Mock =
         new PluginUUPSUpgradeableSetupV2Mock__factory(signers[0]);
