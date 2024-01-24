@@ -13,6 +13,7 @@ type ERC20Contract implements Token @entity(immutable: true) {
   name: String
   symbol: String
   decimals: Int!
+  members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
 type ERC20WrapperContract implements Token @entity(inmutable: true) {
@@ -21,6 +22,7 @@ type ERC20WrapperContract implements Token @entity(inmutable: true) {
   symbol: String
   decimals: Int!
   underlyingToken: ERC20Contract!
+  members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
 type ERC721Contract implements Token @entity(immutable: true) {
@@ -396,15 +398,15 @@ type TokenVotingPlugin implements IPlugin @entity {
   minProposerVotingPower: BigInt
   proposalCount: BigInt!
   token: Token
-  members: [TokenVotingMember!]! @derivedFrom(field: "plugin")
+  # members: [TokenVotingMember!]! @derivedFrom(field: "plugin")
 }
 
 type TokenVotingMember @entity {
   id: ID! # user address + TokenVotingPlugin pluginId.
   address: Bytes!
   balance: BigInt!
-  plugin: TokenVotingPlugin!
-
+  # plugin: TokenVotingPlugin!
+  token: Token! # they are member of this token
   # delegates
   delegatee: TokenVotingMember
   votingPower: BigInt

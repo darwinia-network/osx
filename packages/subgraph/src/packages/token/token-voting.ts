@@ -242,6 +242,13 @@ export function handleVotingSettingsUpdated(
   }
 }
 
+/**
+ * the first time we encounter a token (if it is governance or wrapped) we create a Template == good
+ * we should NOT re create template for this Token if they are re used == not covered by subgraph as of now
+ *    - store some info when the first template is created
+ *    - for future template check if the info exist, if yes do not re create.
+ */
+
 export function handleMembershipContractAnnounced(
   event: MembershipContractAnnounced
 ): void {
@@ -261,6 +268,10 @@ export function handleMembershipContractAnnounced(
     // It's safe to create the same type of template for them.
     let context = new DataSourceContext();
     context.setString('pluginId', event.address.toHexString());
+
+    // TODO: find a way to create this template only once
+    // idea (maybe bad): create an entity called template created or something so we can use to check
+    // if the template previously created
     GovernanceERC20.createWithContext(event.params.definingContract, context);
   }
 }

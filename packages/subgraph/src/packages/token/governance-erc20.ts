@@ -29,13 +29,23 @@ export function handleTransfer(event: Transfer): void {
 
   if (event.params.from != Address.zero()) {
     let fromMember = getOrCreateMember(event.params.from, pluginId);
-    fromMember.balance = fromMember.balance.minus(event.params.value);
+    // fromMember.balance = fromMember.balance.minus(event.params.value);
+    const governanceERC20Contract = GovernanceERC20Contract.bind(event.address);
+    const balance = governanceERC20Contract.try_balanceOf(event.params.from);
+    if (!balance.reverted) {
+      fromMember.balance = balance.value;
+    }
     fromMember.save();
   }
 
   if (event.params.to != Address.zero()) {
     let toMember = getOrCreateMember(event.params.to, pluginId);
-    toMember.balance = toMember.balance.plus(event.params.value);
+    // toMember.balance = toMember.balance.plus(event.params.value);
+    const governanceERC20Contract = GovernanceERC20Contract.bind(event.address);
+    const balance = governanceERC20Contract.try_balanceOf(event.params.from);
+    if (!balance.reverted) {
+      toMember.balance = balance.value;
+    }
     toMember.save();
   }
 }
