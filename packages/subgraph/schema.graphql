@@ -6,6 +6,8 @@ interface Token {
   id: ID! # use address as id
   name: String
   symbol: String
+  # members
+  members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
 type ERC20Contract implements Token @entity(immutable: true) {
@@ -13,6 +15,10 @@ type ERC20Contract implements Token @entity(immutable: true) {
   name: String
   symbol: String
   decimals: Int!
+<<<<<<< Updated upstream
+=======
+  # members
+>>>>>>> Stashed changes
   members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
@@ -22,6 +28,10 @@ type ERC20WrapperContract implements Token @entity(inmutable: true) {
   symbol: String
   decimals: Int!
   underlyingToken: ERC20Contract!
+<<<<<<< Updated upstream
+=======
+  # members
+>>>>>>> Stashed changes
   members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
@@ -29,12 +39,16 @@ type ERC721Contract implements Token @entity(immutable: true) {
   id: ID! # use address as id
   name: String
   symbol: String
+  # members
+  members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
 type ERC1155Contract implements Token @entity(immutable: true) {
   id: ID! # use address as id
   name: String
   symbol: String
+  # members
+  members: [TokenVotingMember!]! @derivedFrom(field: "token")
 }
 
 # Token Balances
@@ -651,4 +665,9 @@ type MultisigProposal implements IProposal @entity {
   executionBlockNumber: BigInt
   executionTxHash: Bytes
   approvers: [MultisigProposalApprover!]! @derivedFrom(field: "proposal")
+}
+
+type DatasourceTemplate @entity {
+  id: ID!
+  name: String!
 }

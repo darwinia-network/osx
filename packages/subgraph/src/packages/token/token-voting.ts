@@ -4,6 +4,9 @@ import {
   TokenVotingProposal,
   TokenVotingVoter,
   TokenVotingVote,
+  ERC20Contract,
+  ERC20WrapperContract,
+  DatasourceTemplate,
 } from '../../../generated/schema';
 import {GovernanceERC20} from '../../../generated/templates';
 import {
@@ -17,7 +20,11 @@ import {
 import {RATIO_BASE, VOTER_OPTIONS, VOTING_MODES} from '../../utils/constants';
 import {getProposalId} from '../../utils/proposals';
 import {identifyAndFetchOrCreateERC20TokenEntity} from '../../utils/tokens/erc20';
-import {BigInt, dataSource, DataSourceContext} from '@graphprotocol/graph-ts';
+import {
+  BigInt,
+  dataSource,
+  DataSourceContext,
+} from '@graphprotocol/graph-ts';
 
 export function handleProposalCreated(event: ProposalCreated): void {
   let context = dataSource.context();
@@ -260,12 +267,14 @@ export function handleMembershipContractAnnounced(
     if (!tokenAddress) {
       return;
     }
-    packageEntity.token = tokenAddress as string;
+    tokenAddress = tokenAddress as string;
+    packageEntity.token = tokenAddress;
 
     packageEntity.save();
 
     // Both GovernanceWrappedERC20/GovernanceERC20 use the `Transfer` event, so
     // It's safe to create the same type of template for them.
+<<<<<<< Updated upstream
     let context = new DataSourceContext();
     context.setString('pluginId', event.address.toHexString());
 
@@ -273,5 +282,16 @@ export function handleMembershipContractAnnounced(
     // idea (maybe bad): create an entity called template created or something so we can use to check
     // if the template previously created
     GovernanceERC20.createWithContext(event.params.definingContract, context);
+=======
+    let datasourceTemplateEntity = DatasourceTemplate.load(tokenAddress);
+    if(!datasourceTemplateEntity) {
+      let context = new DataSourceContext();
+      context.setString('pluginId', event.address.toHexString());
+      GovernanceERC20.createWithContext(event.params.definingContract, context);
+      datasourceTemplateEntity = new DatasourceTemplate(tokenAddress);
+      datasourceTemplateEntity.name = 'GovernanceERC20';
+      datasourceTemplateEntity.save();
+    }
+>>>>>>> Stashed changes
   }
 }

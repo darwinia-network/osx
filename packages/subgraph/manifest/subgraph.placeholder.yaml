@@ -11,7 +11,7 @@ dataSources:
     source:
       abi: DAORegistry
       address: '{{dataSources.DAORegistry.address}}'
-      startBlock: {{dataSources.DAORegistry.startBlock}}
+      startBlock: 49220000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -54,7 +54,7 @@ dataSources:
     source:
       abi: PluginSetupProcessor
       address: '{{address}}'
-      startBlock: {{startBlock}}
+      startBlock: 49220000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
