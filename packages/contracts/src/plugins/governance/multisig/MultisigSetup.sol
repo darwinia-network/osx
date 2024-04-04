@@ -9,6 +9,9 @@ import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
 
 import {DAO} from "../../../core/dao/DAO.sol";
 import {Multisig} from "./Multisig.sol";
+import "hardhat/console.sol";
+
+import "@novaknole20/zodiac-modifier-roles/contracts/Types.sol";
 
 /// @title MultisigSetup
 /// @author Aragon Association - 2022-2023
@@ -23,6 +26,7 @@ contract MultisigSetup is PluginSetup {
     constructor() {
         multisigBase = new Multisig();
     }
+
 
     /// @inheritdoc IPluginSetup
     function prepareInstallation(
@@ -41,35 +45,39 @@ contract MultisigSetup is PluginSetup {
             abi.encodeCall(Multisig.initialize, (IDAO(_dao), members, multisigSettings))
         );
 
-        // Prepare permissions
-        PermissionLib.MultiTargetPermission[]
-            memory permissions = new PermissionLib.MultiTargetPermission[](3);
+        uint k = 20;
 
-        // Set permissions to be granted.
-        // Grant the list of permissions of the plugin to the DAO.
+
+        PermissionLib.MultiTargetPermission[] memory permissions = new PermissionLib.MultiTargetPermission[](1);
+        ConditionFlat[] memory flat = new ConditionFlat[](3);
+        address oebl = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
+        bytes memory g = abi.encode(oebl);
+
+        flat[0] = ConditionFlat({ 
+            parent: 0, 
+            paramType: ParameterType.Calldata, 
+            operator: Operator.Matches, 
+            compValue: ""
+        });
+        flat[1] = ConditionFlat({ 
+            parent: 0, 
+            paramType: ParameterType.Array, 
+            operator: Operator.Matches, 
+            compValue: ""
+        });
+        flat[2] = ConditionFlat({ 
+            parent: 1, 
+            paramType: ParameterType.Static, 
+            operator: Operator.EqualTo, 
+            compValue: g
+        });
+    
+        console.logBytes(g);
+
         permissions[0] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Grant,
-            where: plugin,
-            who: _dao,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: multisigBase.UPDATE_MULTISIG_SETTINGS_PERMISSION_ID()
-        });
-
-        permissions[1] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Grant,
-            where: plugin,
-            who: _dao,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: multisigBase.UPGRADE_PLUGIN_PERMISSION_ID()
-        });
-
-        // Grant `EXECUTE_PERMISSION` of the DAO to the plugin.
-        permissions[2] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Grant,
-            where: _dao,
-            who: plugin,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
+            where: plugin, who: members[0],  selector: Multisig.addAddresses.selector,
+            role: multisigBase.UPDATE_MULTISIG_SETTINGS_PERMISSION_ID(), conditions:  flat,
+            options: ExecutionOptions.None
         });
 
         preparedSetupData.permissions = permissions;
@@ -92,33 +100,7 @@ contract MultisigSetup is PluginSetup {
         address _dao,
         SetupPayload calldata _payload
     ) external view returns (PermissionLib.MultiTargetPermission[] memory permissions) {
-        // Prepare permissions
-        permissions = new PermissionLib.MultiTargetPermission[](3);
-
-        // Set permissions to be Revoked.
-        permissions[0] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Revoke,
-            where: _payload.plugin,
-            who: _dao,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: multisigBase.UPDATE_MULTISIG_SETTINGS_PERMISSION_ID()
-        });
-
-        permissions[1] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Revoke,
-            where: _payload.plugin,
-            who: _dao,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: multisigBase.UPGRADE_PLUGIN_PERMISSION_ID()
-        });
-
-        permissions[2] = PermissionLib.MultiTargetPermission({
-            operation: PermissionLib.Operation.Revoke,
-            where: _dao,
-            who: _payload.plugin,
-            condition: PermissionLib.NO_CONDITION,
-            permissionId: DAO(payable(_dao)).EXECUTE_PERMISSION_ID()
-        });
+       
     }
 
     /// @inheritdoc IPluginSetup

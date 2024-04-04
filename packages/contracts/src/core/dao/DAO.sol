@@ -18,6 +18,7 @@ import {ProtocolVersion} from "@aragon/osx-commons-contracts/src/utils/versionin
 import {VersionComparisonLib} from "@aragon/osx-commons-contracts/src/utils/versioning/VersionComparisonLib.sol";
 import {hasBit, flipBit} from "@aragon/osx-commons-contracts/src/utils/math/BitMap.sol";
 import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
+import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 import {PermissionManager} from "../permission/PermissionManager.sol";
 import {CallbackHandler} from "../utils/CallbackHandler.sol";
@@ -234,7 +235,7 @@ contract DAO is
         address _where,
         address _who,
         bytes32 _permissionId,
-        bytes memory _data
+        bytes calldata _data
     ) external view override returns (bool) {
         return isGranted({_where: _where, _who: _who, _permissionId: _permissionId, _data: _data});
     }
@@ -349,19 +350,35 @@ contract DAO is
         bytes32 _hash,
         bytes memory _signature
     ) external view override(IDAO, IERC1271) returns (bytes4) {
-        if (
-            isGranted({
-                _where: address(this),
-                _who: msg.sender,
-                _permissionId: VALIDATE_SIGNATURE_PERMISSION_ID,
-                _data: abi.encode(_hash, _signature)
-            })
-        ) {
-            return 0x1626ba7e; // `type(IERC1271).interfaceId` = bytes4(keccak256("isValidSignature(bytes32,bytes)")`
-        }
+        // if (
+        //     isGranted({
+        //         _where: address(this),
+        //         _who: msg.sender,
+        //         _permissionId: VALIDATE_SIGNATURE_PERMISSION_ID,
+        //         _data: abi.encode(_hash, _signature)
+        //     })
+        // ) {
+        //     return 0x1626ba7e; // `type(IERC1271).interfaceId` = bytes4(keccak256("isValidSignature(bytes32,bytes)")`
+        // }
         return 0xffffffff; // `bytes4(uint32(type(uint32).max-1))`
     }
 
+     function execTransactionFromModuleReturnData(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        Enum.Operation operation
+    ) public override returns (bool success, bytes memory returnData) {}
+
+    function execTransactionFromModule(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        Enum.Operation operation
+    ) public override returns (bool success) {}
+
+    function setUp(bytes memory initializeParams) public override {}
+    
     /// @notice Emits the `NativeTokenDeposited` event to track native token deposits that weren't made via the deposit method.
     /// @dev This call is bound by the gas limitations for `send`/`transfer` calls introduced by [ERC-2929](https://eips.ethereum.org/EIPS/eip-2929).
     /// Gas cost increases in future hard forks might break this function. As an alternative, [ERC-2930](https://eips.ethereum.org/EIPS/eip-2930)-type transactions using access lists can be employed.

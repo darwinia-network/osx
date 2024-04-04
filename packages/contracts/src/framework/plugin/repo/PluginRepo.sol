@@ -15,6 +15,7 @@ import {PluginSetup} from "@aragon/osx-commons-contracts/src/plugin/setup/Plugin
 
 import {PermissionManager} from "../../../core/permission/PermissionManager.sol";
 import {IPluginRepo} from "./IPluginRepo.sol";
+import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /// @title PluginRepo
 /// @author Aragon Association - 2020 - 2023
@@ -118,6 +119,22 @@ contract PluginRepo is
         _disableInitializers();
     }
 
+    function execTransactionFromModuleReturnData(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        Enum.Operation operation
+    ) public override returns (bool success, bytes memory returnData) {}
+
+    function execTransactionFromModule(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        Enum.Operation operation
+    ) public override returns (bool success) {}
+
+    function setUp(bytes memory initializeParams) public override {}
+    
     /// @notice Initializes the contract by
     /// - initializing the permission manager
     /// - granting the `MAINTAINER_PERMISSION_ID` permission to the initial owner.

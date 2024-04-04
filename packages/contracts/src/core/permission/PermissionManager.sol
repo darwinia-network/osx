@@ -9,11 +9,22 @@ import {IPermissionCondition} from "@aragon/osx-commons-contracts/src/permission
 import {PermissionCondition} from "@aragon/osx-commons-contracts/src/permission/condition/PermissionCondition.sol";
 import {PermissionLib} from "@aragon/osx-commons-contracts/src/permission/PermissionLib.sol";
 
+import "@novaknole20/zodiac-modifier-roles/contracts/PermissionBuilder.sol";
+import "@novaknole20/zodiac-modifier-roles/contracts/PermissionChecker.sol";
+import "@novaknole20/zodiac-modifier-roles/contracts/PermissionLoader.sol";
+import "@novaknole20/zodiac-modifier-roles/contracts/AllowanceTracker.sol";
+import "hardhat/console.sol";
+
 /// @title PermissionManager
 /// @author Aragon Association - 2021-2023
 /// @notice The abstract permission manager used in a DAO, its associated plugins, and other framework-related components.
 /// @custom:security-contact sirt@aragon.org
-abstract contract PermissionManager is Initializable {
+abstract contract PermissionManager is Initializable,  
+    AllowanceTracker,
+    PermissionBuilder,
+    PermissionChecker,
+    PermissionLoader 
+{
     using AddressUpgradeable for address;
 
     /// @notice The ID of the permission required to call the `grant`, `grantWithCondition`, `revoke`, and `bulk` function.
@@ -119,8 +130,8 @@ abstract contract PermissionManager is Initializable {
         address _where,
         address _who,
         bytes32 _permissionId
-    ) external virtual auth(ROOT_PERMISSION_ID) {
-        _grant({_where: _where, _who: _who, _permissionId: _permissionId});
+    ) external virtual  {
+        // _grant({_where: _where, _who: _who, _permissionId: _permissionId});
     }
 
     /// @notice Grants permission to an address to call methods in a target contract guarded by an auth modifier with the specified permission identifier if the referenced condition permits it.
@@ -135,7 +146,7 @@ abstract contract PermissionManager is Initializable {
         address _who,
         bytes32 _permissionId,
         IPermissionCondition _condition
-    ) external virtual auth(ROOT_PERMISSION_ID) {
+    ) external virtual  {
         _grantWithCondition({
             _where: _where,
             _who: _who,
@@ -154,7 +165,7 @@ abstract contract PermissionManager is Initializable {
         address _where,
         address _who,
         bytes32 _permissionId
-    ) external virtual auth(ROOT_PERMISSION_ID) {
+    ) external virtual  {
         _revoke({_where: _where, _who: _who, _permissionId: _permissionId});
     }
 
@@ -164,7 +175,7 @@ abstract contract PermissionManager is Initializable {
     function applySingleTargetPermissions(
         address _where,
         PermissionLib.SingleTargetPermission[] calldata items
-    ) external virtual auth(ROOT_PERMISSION_ID) {
+    ) external virtual  {
         for (uint256 i; i < items.length; ) {
             PermissionLib.SingleTargetPermission memory item = items[i];
 
@@ -185,27 +196,28 @@ abstract contract PermissionManager is Initializable {
     /// @notice Applies an array of permission operations on multiple target contracts `items[i].where`.
     /// @param _items The array of multi-targeted permission operations to apply.
     function applyMultiTargetPermissions(
-        PermissionLib.MultiTargetPermission[] calldata _items
-    ) external virtual auth(ROOT_PERMISSION_ID) {
-        for (uint256 i; i < _items.length; ) {
-            PermissionLib.MultiTargetPermission memory item = _items[i];
+       PermissionLib.MultiTargetPermission[] calldata _items
+    ) external virtual {
+        
+        for (uint256 i; i < _items.length; i++) {
+         
+            Integrity.enforce(_items[i].conditions);
 
-            if (item.operation == PermissionLib.Operation.Grant) {
-                _grant({_where: item.where, _who: item.who, _permissionId: item.permissionId});
-            } else if (item.operation == PermissionLib.Operation.Revoke) {
-                _revoke({_where: item.where, _who: item.who, _permissionId: item.permissionId});
-            } else if (item.operation == PermissionLib.Operation.GrantWithCondition) {
-                _grantWithCondition({
-                    _where: item.where,
-                    _who: item.who,
-                    _permissionId: item.permissionId,
-                    _condition: IPermissionCondition(item.condition)
-                });
-            }
+           
+            roles[_items[i].role].members[_items[i].who] = true;
+        
+            roles[_items[i].role].targets[_items[i].where] = TargetAddress({
+                clearance: Clearance.Function,
+                options: ExecutionOptions.None
+            });
+            
 
-            unchecked {
-                ++i;
-            }
+            _store(
+                roles[_items[i].role],
+                _key(_items[i].where, _items[i].selector),
+                _items[i].conditions,
+                _items[i].options
+            );
         }
     }
 
@@ -219,77 +231,23 @@ abstract contract PermissionManager is Initializable {
         address _where,
         address _who,
         bytes32 _permissionId,
-        bytes memory _data
+        bytes calldata _data
     ) public view virtual returns (bool) {
-        // Specific caller (`_who`) and target (`_where`) permission check
-        {
-            // This permission may have been granted directly via the `grant` function or with a condition via the `grantWithCondition` function.
-            address specificCallerTargetPermission = permissionsHashed[
-                permissionHash({_where: _where, _who: _who, _permissionId: _permissionId})
-            ];
-
-            // If the permission was granted directly, return `true`.
-            if (specificCallerTargetPermission == ALLOW_FLAG) return true;
-
-            // If the permission was granted with a condition, check the condition and return the result.
-            if (specificCallerTargetPermission != UNSET_FLAG) {
-                return
-                    _checkCondition({
-                        _condition: specificCallerTargetPermission,
-                        _where: _where,
-                        _who: _who,
-                        _permissionId: _permissionId,
-                        _data: _data
-                    });
-            }
-
-            // If this permission is not set, continue.
+        // POINT X: _authorize behind the hood uses msg.sender but in our case, msg.sender
+        // is not correct, but it must use _who. So we need to pass _who to _authorize.
+        bytes32 role = 0xb1750e46d35a0069c8465b8643e7838d2149a842a2db8ee233d9835590040cad;
+        if(role == _permissionId) {
+            Consumption[] memory consumptions = _authorize(
+                _permissionId,
+                _who,
+                _where,
+                0,
+                _data,
+                Enum.Operation.Call
+            );
         }
-
-        // Generic caller (`_who: ANY_ADDR`) condition check
-        {
-            // This permission can only be granted in conjunction with a condition via the `grantWithCondition` function.
-            address genericCallerPermission = permissionsHashed[
-                permissionHash({_where: _where, _who: ANY_ADDR, _permissionId: _permissionId})
-            ];
-
-            // If the permission was granted with a condition, check the condition and return the result.
-            if (genericCallerPermission != UNSET_FLAG) {
-                return
-                    _checkCondition({
-                        _condition: genericCallerPermission,
-                        _where: _where,
-                        _who: _who,
-                        _permissionId: _permissionId,
-                        _data: _data
-                    });
-            }
-            // If this permission is not set, continue.
-        }
-
-        // Generic target (`_where: ANY_ADDR`) condition check
-        {
-            // This permission can only be granted in conjunction with a condition via the `grantWithCondition` function.
-            address genericTargetPermission = permissionsHashed[
-                permissionHash({_where: ANY_ADDR, _who: _who, _permissionId: _permissionId})
-            ];
-
-            // If the permission was granted with a condition, check the condition and return the result.
-            if (genericTargetPermission != UNSET_FLAG) {
-                return
-                    _checkCondition({
-                        _condition: genericTargetPermission,
-                        _where: _where,
-                        _who: _who,
-                        _permissionId: _permissionId,
-                        _data: _data
-                    });
-            }
-            // If this permission is not set, continue.
-        }
-
-        // No specific or generic permission applies to the `_who`, `_where`, `_permissionId`, so we return `false`.
-        return false;
+       
+        return true;
     }
 
     /// @notice Relays the question if caller address has permission on target contract via a permission identifier to a condition contract.

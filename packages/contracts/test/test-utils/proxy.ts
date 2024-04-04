@@ -24,6 +24,7 @@ export async function deployWithProxy<T>(
     kind: options.proxyType || 'uups',
     initializer: false,
     unsafeAllow: ['constructor'],
+    unsafeAllowLinkedLibraries: true,
     constructorArgs: options.constructurArgs || [],
   }) as unknown as Promise<T>;
 }

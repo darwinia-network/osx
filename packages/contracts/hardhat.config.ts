@@ -88,6 +88,7 @@ const config: HardhatUserConfig = {
       throwOnCallFailures: true,
       blockGasLimit: 3000000000, // really high to test some things that are only possible with a higher block gas limit
       gasPrice: 80000000000,
+      allowUnlimitedContractSize: true,
       deploy: ENABLE_DEPLOY_TEST
         ? ['./deploy']
         : ['./deploy/env', './deploy/new', './deploy/verification'],

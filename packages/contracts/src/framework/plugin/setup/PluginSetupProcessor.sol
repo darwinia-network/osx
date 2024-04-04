@@ -11,9 +11,11 @@ import {DAO, IDAO} from "../../../core/dao/DAO.sol";
 import {PermissionLib} from "@aragon/osx-commons-contracts/src/permission/PermissionLib.sol";
 import {PluginUUPSUpgradeable} from "@aragon/osx-commons-contracts/src/plugin/PluginUUPSUpgradeable.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
+import "hardhat/console.sol";
 
 import {PluginRepoRegistry} from "../repo/PluginRepoRegistry.sol";
 import {PluginRepo} from "../repo/PluginRepo.sol";
+import "@novaknole20/zodiac-modifier-roles/contracts/Types.sol";
 
 import {PluginSetupRef, hashHelpers, hashPermissions, _getPreparedSetupId, _getAppliedSetupId, _getPluginInstallationId, PreparationType} from "./PluginSetupProcessorHelpers.sol";
 
@@ -103,7 +105,7 @@ contract PluginSetupProcessor is ProtocolVersion {
         address plugin;
         PluginSetupRef pluginSetupRef;
         bytes initData;
-        PermissionLib.MultiTargetPermission[] permissions;
+       PermissionLib.MultiTargetPermission[] permissions;
         bytes32 helpersHash;
     }
 
@@ -123,7 +125,7 @@ contract PluginSetupProcessor is ProtocolVersion {
     struct ApplyUninstallationParams {
         address plugin;
         PluginSetupRef pluginSetupRef;
-        PermissionLib.MultiTargetPermission[] permissions;
+       PermissionLib.MultiTargetPermission[] permissions;
     }
 
     /// @notice The plugin repo registry listing the `PluginRepo` contracts versioning the `PluginSetup` contracts.
@@ -253,7 +255,7 @@ contract PluginSetupProcessor is ProtocolVersion {
         PluginRepo indexed pluginSetupRepo,
         PluginRepo.Tag versionTag,
         IPluginSetup.SetupPayload setupPayload,
-        PermissionLib.MultiTargetPermission[] permissions
+       PermissionLib.MultiTargetPermission[] permissions
     );
 
     /// @notice Emitted after a plugin installation was applied.
@@ -351,7 +353,7 @@ contract PluginSetupProcessor is ProtocolVersion {
     function applyInstallation(
         address _dao,
         ApplyInstallationParams calldata _params
-    ) external canApply(_dao, APPLY_INSTALLATION_PERMISSION_ID) {
+    ) external {
         bytes32 pluginInstallationId = _getPluginInstallationId(_dao, _params.plugin);
 
         PluginState storage pluginState = states[pluginInstallationId];

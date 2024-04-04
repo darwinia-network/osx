@@ -24,7 +24,25 @@ export const TOKEN_INTERFACE_IDS = {
 };
 
 export async function deployNewDAO(signer: SignerWithAddress): Promise<DAO> {
-  const dao = await deployWithProxy<DAO>(new DAO__factory(signer));
+  const packLibrary = await ethers.getContractFactory(
+    '@novaknole20/zodiac-modifier-roles/contracts/packers/Packer.sol:Packer'
+  );
+  const packLibraryD = await packLibrary.deploy();
+
+  const packLibrary1 = await ethers.getContractFactory(
+    '@novaknole20/zodiac-modifier-roles/contracts/Integrity.sol:Integrity'
+  );
+  const packLibrary2 = await packLibrary1.deploy();
+
+  const factory = await ethers.getContractFactory('src/core/dao/DAO.sol:DAO', {
+    libraries: {
+      '@novaknole20/zodiac-modifier-roles/contracts/packers/Packer.sol:Packer':
+        packLibraryD.address,
+      '@novaknole20/zodiac-modifier-roles/contracts/Integrity.sol:Integrity':
+        packLibrary2.address,
+    },
+  });
+  const dao = await deployWithProxy<DAO>(factory);
 
   await dao.initialize(
     '0x00',
