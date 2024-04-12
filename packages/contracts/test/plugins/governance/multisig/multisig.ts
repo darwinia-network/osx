@@ -84,9 +84,7 @@ describe('Multisig', function () {
         value: 0,
       },
     ];
-    dummyMetadata = ethers.utils.hexlify(
-      ethers.utils.toUtf8Bytes('0x123456789')
-    );
+    dummyMetadata = '0x12345678';
 
     dao = await deployNewDAO(signers[0]);
   });
@@ -1201,6 +1199,7 @@ describe('Multisig', function () {
 
         // `tryExecution` is turned on but the vote is not decided yet
         let tx = await multisig.connect(signers[1]).approve(id, true);
+
         await expect(
           findEventTopicLog<ExecutedEvent>(
             tx,

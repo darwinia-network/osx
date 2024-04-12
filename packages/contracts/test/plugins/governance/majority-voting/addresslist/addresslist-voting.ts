@@ -78,9 +78,7 @@ describe('AddresslistVoting', function () {
         value: 0,
       },
     ];
-    dummyMetadata = ethers.utils.hexlify(
-      ethers.utils.toUtf8Bytes('0x123456789')
-    );
+    dummyMetadata = '0x12345678';
 
     dao = await deployNewDAO(signers[0]);
   });
