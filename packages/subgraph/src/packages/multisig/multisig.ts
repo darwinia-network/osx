@@ -60,7 +60,7 @@ export function _handleProposalCreated(
 
   if (!proposal.reverted) {
     proposalEntity.executed = proposal.value.value0;
-    proposalEntity.approvals = proposal.value.value1;
+    proposalEntity.approvalCount = proposal.value.value1;
 
     // ProposalParameters
     let parameters = proposal.value.value2;
@@ -130,14 +130,14 @@ export function handleApproved(event: Approved): void {
     let proposal = contract.try_getProposal(pluginProposalId);
 
     if (!proposal.reverted) {
-      let approvals = proposal.value.value1;
-      proposalEntity.approvals = approvals;
+      let approvalCount = proposal.value.value1;
+      proposalEntity.approvalCount = approvalCount;
 
       // calculate if proposal is executable
       let minApprovalsStruct = proposal.value.value2;
 
       if (
-        approvals >= minApprovalsStruct.minApprovals &&
+        approvalCount >= minApprovalsStruct.minApprovals &&
         !proposalEntity.approvalReached
       ) {
         proposalEntity.approvalReached = true;
