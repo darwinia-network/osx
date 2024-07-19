@@ -15,6 +15,8 @@ export function handleDAORegistered(event: DAORegistered): void {
   let daoEntityId = generateDaoEntityId(daoAddress);
   let entity = new Dao(daoEntityId);
 
+  entity.orderId = `${event.block.number}-${event.transaction.index}-${event.logIndex}`;
+
   if (!isInSubdomainBlocklist(daoEntityId)) {
     entity.subdomain = event.params.subdomain;
   }

@@ -179,6 +179,7 @@ type StandardCallback @entity {
 
 type Dao @entity {
   id: ID! # use address as id
+  orderId: String!
   subdomain: String
   creator: Bytes!
   daoURI: String
